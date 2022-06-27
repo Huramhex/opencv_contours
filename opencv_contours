@@ -1,0 +1,58 @@
+# 轮廓提取
+import os.path
+
+import cv2
+
+
+# 转二进制图像
+import numpy as np
+
+
+def ToBinray(img):
+    global imgray, binary
+    # 1、灰度图
+    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # cv2.imshow('imgray', imgray)
+
+    # 2、二进制图像
+    ret, binary = cv2.threshold(imgray, 200, 255, 0)
+    # 阈值 二进制图像
+    # cv2.imshow('binary', binary)
+    return binary
+
+
+# 提取轮廓
+def GetGontours(img):
+    #  加边框
+    img = cv2.copyMakeBorder(img, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=(0, 0, 0)) 
+    # 根据二值图找到轮廓
+    contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    # 轮廓      层级                              轮廓检索模式       轮廓逼近方法
+    H = img.shape[0]
+    W = img.shape[1]
+    img_black = np.zeros([H, W, 3]).astype('uint8')
+    # 2、画出轮廓
+    dst = cv2.drawContours(img_black, contours, -1, (255, 255, 255), 1)
+    #                           轮廓     第几个(默认-1：所有)  颜色  线条厚度
+
+    # cv2.imshow('dst', dst)
+    return dst
+
+
+if __name__ == '__main__':
+    img = cv2.imread(r'.\img\1.png')
+    img = img * 255
+    kernel = np.arange(3, 11, 2)
+    sigma = np.arange(1, 5, 0.5)
+    for i in kernel:
+        for j in sigma:
+            img = cv2.GaussianBlur(img, (i, i), j)
+            # cv2.imshow('img', img)
+            binary_img = ToBinray(img)  # 转二进制
+
+            contour = GetGontours(binary_img)  # 提取轮廓
+            save_img = 'contour_k{}_sigma{}.png'.format(i, j)
+            save_path = r'.\result'
+            path = os.path.join(save_path, save_img)
+            cv2.imwrite(path, contour)
+            print(str(save_img)+'__saved')
